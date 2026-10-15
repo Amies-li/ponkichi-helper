@@ -1,0 +1,601 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>ぽん吉 Helper · 一橋祭 prototype</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+JP:wght@400;600;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --page:#E7E1D8; --page-ink:#4A403B; --page-mute:#7C716A;
+  --paper:#F2EFEB; --head:#EAE3DA; --card:#FBF9F6;
+  --brick:#A23F2B; --brick-d:#8A3322; --pill:#EADFD8; --ink:#3A3330; --mute:#7A6F69;
+  --line:#D9B8AE; --gold:#EFD36A; --charcoal:#3B3B3B;
+  box-sizing:border-box;
+  padding-top:env(safe-area-inset-top,0px);
+  padding-bottom:env(safe-area-inset-bottom,0px);
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){ --page:#1F1B19; --page-ink:#E9E2D9; --page-mute:#A89D95; color-scheme:dark; }
+}
+:root[data-theme="dark"]{ --page:#1F1B19; --page-ink:#E9E2D9; --page-mute:#A89D95; color-scheme:dark; }
+*,*::before,*::after{box-sizing:border-box}
+html{scroll-padding-top:env(safe-area-inset-top,0px);height:100%}
+html,body{margin:0;height:100%}
+body{background:var(--page);color:var(--page-ink);font-family:'Noto Serif JP','Hiragino Mincho ProN','Yu Mincho',serif;display:flex;align-items:center;justify-content:center;gap:56px;overflow:hidden}
+button{font:inherit;cursor:pointer}
+button:focus-visible,input:focus-visible{outline:2px solid var(--brick);outline-offset:2px}
+
+/* side caption (desktop only) */
+.caption{max-width:260px;font-size:13px;line-height:1.8;color:var(--page-mute)}
+.caption h1{font-size:22px;line-height:1.4;color:var(--page-ink);margin:0 0 10px;font-weight:700}
+.caption p{margin:0 0 10px}
+
+/* device */
+.stage{position:relative;flex:none}
+.device{width:426px;height:898px;border-radius:66px;background:#1d1d1f;padding:12px;box-shadow:0 0 0 2px #4a4a4c, 0 30px 60px rgba(0,0,0,.25);transform-origin:top left}
+.screen{position:relative;width:402px;height:874px;border-radius:55px;overflow:hidden;background:var(--paper);color:var(--ink);display:flex;flex-direction:column}
+.island{position:absolute;top:11px;left:50%;transform:translateX(-50%);width:124px;height:36px;border-radius:20px;background:#000;z-index:5}
+.status{height:54px;flex:none;display:flex;align-items:flex-end;justify-content:space-between;padding:0 30px 8px 40px;font-family:-apple-system,'Helvetica Neue',sans-serif;font-weight:600;font-size:16px;background:var(--head)}
+.status .sys{display:flex;gap:6px;align-items:center}
+body.bare{gap:0}
+body.bare .caption{display:none}
+body.bare .device{width:100vw;height:100%;border-radius:0;padding:0;box-shadow:none;background:transparent;transform:none!important}
+body.bare .stage{width:100vw!important;height:100%!important}
+body.bare .screen{width:100%;height:100%;border-radius:0}
+body.bare .island,body.bare .status,body.bare .homebar{display:none}
+
+/* site header */
+.sitehead{flex:none;background:var(--head);display:flex;align-items:center;justify-content:space-between;padding:8px 16px 10px}
+.logo{display:flex;align-items:center;gap:10px}
+.logo svg{flex:none}
+.logo small{display:block;font-size:11px;color:var(--brick);line-height:1.2}
+.logo b{display:block;font-size:22px;color:var(--brick);font-weight:600;letter-spacing:2px;line-height:1.1}
+.headbtns{display:flex;gap:8px;align-items:center}
+.mybtn{display:flex;align-items:center;gap:6px;background:var(--brick);color:#fff;border:0;padding:7px 10px;font-size:13px;font-weight:700}
+.mybtn .n{background:#fff;color:var(--brick);border-radius:9px;min-width:18px;height:18px;font-size:11px;line-height:18px;text-align:center;padding:0 4px;font-family:-apple-system,sans-serif}
+.menu{width:34px;height:34px;border:0;background:var(--charcoal);display:flex;flex-direction:column;justify-content:center;align-items:center;gap:4px}
+.menu i{display:block;width:16px;height:1.5px;background:#fff}
+
+/* banner */
+.banner{flex:none;position:relative;height:96px;background:linear-gradient(90deg,var(--brick) 0%,#B5654F 55%,#E9D3C9 100%);overflow:hidden;color:#fff;padding:18px 22px}
+.banner .en{font-size:13px;letter-spacing:1px;opacity:.9}
+.banner h2{margin:2px 0 0;font-size:28px;font-weight:700;letter-spacing:2px}
+.banner svg{position:absolute;pointer-events:none}
+
+/* chat */
+.chat{flex:1;overflow-y:auto;padding:16px 16px 8px;display:flex;flex-direction:column;gap:14px;scroll-behavior:smooth}
+.dateline{align-self:center;font-size:12px;color:var(--mute);border:1px solid var(--line);padding:3px 12px;border-radius:14px;background:var(--card)}
+.row{display:flex;gap:8px;align-items:flex-end}
+.row.me{justify-content:flex-end}
+.av{flex:none;width:40px;height:40px;border-radius:20px;background:var(--brick);display:grid;place-items:center;position:relative}
+.av span{color:#fff;font-size:16px;font-weight:700}
+.av svg{position:absolute;top:-7px;left:10px}
+.bub{max-width:280px;padding:10px 14px;font-size:14px;line-height:1.65;border-radius:16px;white-space:pre-wrap;word-break:break-word}
+.pon .bub{background:var(--card);border:1px solid #E4D8D1;border-bottom-left-radius:4px}
+.me .bub{background:var(--brick);color:#fff;border-bottom-right-radius:4px}
+.typing .bub{color:var(--mute);font-size:13px}
+.dots{display:inline-flex;gap:3px;margin-right:6px;vertical-align:middle}
+.dots i{width:5px;height:5px;border-radius:3px;background:var(--brick);animation:b 1s infinite}
+.dots i:nth-child(2){animation-delay:.15s}.dots i:nth-child(3){animation-delay:.3s}
+@keyframes b{0%,60%,100%{opacity:.25}30%{opacity:1}}
+@media (prefers-reduced-motion: reduce){.dots i{animation:none;opacity:.7}.chat{scroll-behavior:auto}}
+
+/* plan */
+.plan{margin-left:44px;background:var(--card);border:1px solid #E4D8D1;padding:14px 14px 12px}
+.plan h3{margin:0;font-size:16px;font-weight:700;color:var(--ink)}
+.plan .sub{font-size:12px;color:var(--mute);margin:2px 0 10px}
+.stop{display:grid;grid-template-columns:44px 1fr;gap:10px;align-items:start}
+.time{font-size:13px;font-weight:700;color:var(--brick);padding-top:2px;font-family:-apple-system,'Helvetica Neue',sans-serif}
+.pcard{display:grid;grid-template-columns:64px 1fr;gap:10px;padding-bottom:10px;border-bottom:1.5px solid var(--line)}
+.thumb{width:64px;height:64px;display:grid;place-items:center;position:relative;overflow:hidden}
+.thumb svg.ic{position:relative;z-index:1}
+.ptitle{font-size:14px;font-weight:700;line-height:1.4}
+.pgroup{font-size:11px;color:var(--mute);margin-top:2px}
+.pnote{font-size:12px;color:var(--ink);margin-top:4px;line-height:1.5}
+.pills{display:flex;gap:6px;align-items:center;margin-top:6px;flex-wrap:wrap}
+.pill{display:inline-flex;align-items:center;gap:4px;background:var(--pill);color:var(--brick);font-size:11px;padding:3px 9px;border-radius:12px}
+.heart{margin-left:auto;border:0;background:none;padding:2px;line-height:0}
+.heart svg path{fill:#3E3A39;transition:fill .15s}
+.heart[aria-pressed="true"] svg path{fill:#D95B57}
+.walk{grid-column:2;font-size:11px;color:var(--mute);padding:6px 0 6px 2px;display:flex;align-items:center;gap:6px}
+.walk::before{content:"";width:1px;height:14px;border-left:1.5px dashed var(--line);margin-left:30px}
+.actions{display:flex;gap:8px;margin-top:12px}
+.actions button{flex:1;font-size:12px;padding:9px 6px;border:1px solid var(--brick);background:transparent;color:var(--brick)}
+.actions button.primary{background:var(--brick);color:#fff}
+
+/* composer */
+.chips{flex:none;display:flex;gap:8px;overflow-x:auto;padding:8px 16px 6px;scrollbar-width:none}
+.chips::-webkit-scrollbar{display:none}
+.chip{flex:none;max-width:250px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;border:1px solid var(--brick);color:var(--brick);background:var(--card);border-radius:16px;padding:6px 12px;font-size:12px}
+.composer{flex:none;display:flex;gap:8px;padding:6px 16px 10px;background:var(--paper)}
+.composer input{flex:1;min-width:0;border:1px solid #CFC6BF;background:#fff;padding:10px 12px;font:inherit;font-size:14px;color:var(--ink)}
+.composer button{border:0;background:var(--brick);color:#fff;width:44px;display:grid;place-items:center}
+.composer button:disabled{opacity:.5}
+.homebar{flex:none;height:24px;display:grid;place-items:center}
+.homebar i{width:134px;height:5px;border-radius:3px;background:#1d1d1f}
+.toast{position:absolute;left:50%;bottom:120px;transform:translateX(-50%);background:var(--charcoal);color:#fff;font-size:12px;padding:8px 14px;border-radius:18px;opacity:0;transition:opacity .2s;pointer-events:none;white-space:nowrap;z-index:6}
+.toast.on{opacity:1}
+
+/* hero (top page) */
+.hero{position:absolute;inset:54px 0 0 0;z-index:4;background:linear-gradient(180deg,#EFEAE3 0%,#E9E2D8 45%,#F1EEE9 100%);display:flex;flex-direction:column;transition:transform .45s cubic-bezier(.6,0,.2,1),opacity .45s}
+.hero.gone{transform:translateY(-100%);opacity:0;pointer-events:none}
+@media (prefers-reduced-motion: reduce){.hero{transition:none}}
+.hero svg.art{flex:none;display:block}
+.hero .txt{padding:0 28px;color:var(--brick);display:flex;flex-direction:column}
+.hero .no{font-size:22px;letter-spacing:2px}
+.hero .ttl{font-size:56px;font-weight:600;letter-spacing:4px;line-height:1.05}
+.hero .theme{font-size:28px;font-weight:700;letter-spacing:6px;text-shadow:2px 2px 0 #EBD57A;margin-top:2px}
+.hero .yr{font-size:13px;margin-top:12px}
+.hero .dates{display:flex;align-items:center;gap:8px;font-size:34px;line-height:1}
+.hero .dw{display:inline-grid;place-items:center;width:34px;height:34px;border-radius:17px;font-size:10px;border:1px solid var(--brick)}
+.hero .dw.f{background:var(--brick);color:#fff}
+.hero .arrow{width:34px;height:1px;background:var(--brick);position:relative}
+.hero .arrow::after{content:"";position:absolute;right:0;top:-3px;width:8px;height:1px;background:var(--brick);transform:rotate(30deg);transform-origin:right}
+.hero .hrs{font-size:13px;margin-top:6px}
+.entry{position:absolute;right:14px;bottom:26px;border:0;background:none;padding:0;display:flex;flex-direction:column;align-items:center}
+.entry img{width:112px;height:auto;display:block}
+.entry .q{width:46px;height:46px;border-radius:23px;background:var(--brick);color:#fff;font-size:24px;font-weight:700;display:grid;place-items:center;position:relative;margin-bottom:12px;font-family:-apple-system,'Helvetica Neue',sans-serif}
+.entry .q::after{content:"";position:absolute;bottom:-7px;left:50%;transform:translateX(-50%);border:7px solid transparent;border-bottom:0;border-top-color:var(--brick)}
+.entry:hover img{transform:translateY(-2px)}
+.entry img{transition:transform .2s}
+
+/* avatar picker */
+.pick{position:absolute;inset:54px 0 0 0;z-index:3;background:var(--paper);display:flex;flex-direction:column;transition:transform .4s cubic-bezier(.6,0,.2,1),opacity .4s}
+.pick.gone{transform:translateX(100%);opacity:0;pointer-events:none}
+@media (prefers-reduced-motion: reduce){.pick{transition:none}}
+.pick .top{display:flex;align-items:center;gap:8px;padding:10px 12px;background:var(--head)}
+.pick .top button{border:0;background:none;color:var(--brick);font-size:14px;display:flex;align-items:center;gap:4px;padding:6px}
+.pick .lead{padding:18px 24px 6px;color:var(--brick)}
+.pick .lead h2{margin:0;font-size:24px;font-weight:700;letter-spacing:1px}
+.pick .lead p{margin:4px 0 0;font-size:13px;color:var(--mute);line-height:1.6}
+.preview{flex:1;min-height:0;display:flex;align-items:center;justify-content:center;position:relative}
+.preview::before{content:"";position:absolute;width:250px;height:250px;border-radius:50%;border:1.5px solid #EBD57A}
+.preview img{position:relative;max-height:300px;max-width:280px}
+.opts{display:flex;gap:12px;padding:0 20px;justify-content:center}
+.opt{width:104px;height:116px;border:1.5px solid #DCD2CA;background:var(--card);padding:6px;display:flex;flex-direction:column;align-items:center;gap:4px;font-size:11px;color:var(--mute)}
+.opt span.img{flex:1;width:100%;background-repeat:no-repeat}
+.opt[aria-checked="true"]{border-color:var(--brick);box-shadow:inset 0 0 0 1.5px var(--brick);color:var(--brick);font-weight:700}
+.pick .go{margin:16px 20px 12px;border:0;background:var(--brick);color:#fff;padding:14px;font-size:16px;font-weight:700;letter-spacing:1px}
+.pick .go small{display:block;font-size:11px;font-weight:400;opacity:.85;letter-spacing:0}
+.av{background-color:#F3E6D6!important;background-repeat:no-repeat;overflow:hidden;border:1.5px solid var(--brick)}
+body.bare .hero{inset:0}
+.logo{cursor:pointer}
+.sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)}
+</style>
+</head>
+<body>
+<div class="caption" id="caption">
+  <h1>ぽん吉 Helper<br>一橋祭 prototype</h1>
+  <p>iPhone 17 Pro screen (402 × 874 pt, 150.0 × 71.9 mm). Type one sentence about your group, your time and what you want; Ponkichi builds a route.</p>
+  <p>Project times, venues and club names are sample data for the prototype. Routes are built by a planner that runs in the browser.</p>
+</div>
+
+<div class="stage" id="stage">
+<div class="device" id="device">
+<div class="screen">
+  <div class="island" aria-hidden="true"></div>
+  <div class="status" aria-hidden="true"><span id="clock">13:00</span><span class="sys">
+    <svg width="18" height="12" viewBox="0 0 18 12"><rect x="0" y="8" width="3" height="4" rx="1" fill="#000"/><rect x="5" y="5" width="3" height="7" rx="1" fill="#000"/><rect x="10" y="2.5" width="3" height="9.5" rx="1" fill="#000"/><rect x="15" y="0" width="3" height="12" rx="1" fill="#000"/></svg>
+    <svg width="26" height="12" viewBox="0 0 26 12"><rect x=".5" y=".5" width="22" height="11" rx="3" fill="none" stroke="#000" opacity=".4"/><rect x="2" y="2" width="17" height="8" rx="2" fill="#000"/><rect x="23.5" y="4" width="2" height="4" rx="1" fill="#000" opacity=".4"/></svg>
+  </span></div>
+
+
+  <section class="hero" id="hero" aria-label="一橋祭 ぽん吉 Helper top">
+    <svg class="art" width="402" height="400" viewBox="0 0 402 400" aria-hidden="true">
+      <defs>
+        <pattern id="asa2" width="14" height="14" patternUnits="userSpaceOnUse" patternTransform="rotate(45)"><path d="M0 7H14M7 0V14" stroke="#F3E6DF" stroke-width=".9" fill="none"/></pattern>
+        <pattern id="stripe" width="9" height="9" patternUnits="userSpaceOnUse" patternTransform="rotate(-50)"><rect width="2" height="9" fill="#B9A07F"/></pattern>
+        <linearGradient id="tan" x1="0" x2="1"><stop offset="0" stop-color="#EFE9E2"/><stop offset=".6" stop-color="#BBA382"/></linearGradient>
+        <clipPath id="c1"><circle cx="262" cy="202" r="36"/></clipPath>
+        <clipPath id="c2"><circle cx="70" cy="94" r="44"/></clipPath>
+      </defs>
+      <rect x="226" y="0" width="94" height="270" fill="#A23F2B"/>
+      <rect x="118" y="96" width="94" height="304" fill="#AE5B47"/>
+      <rect x="160" y="54" width="220" height="30" fill="#EBD57A"/>
+      <rect x="24" y="300" width="230" height="28" fill="url(#tan)"/>
+      <rect x="0" y="0" width="402" height="400" fill="url(#asa2)" clip-path="url(#c1)"/>
+      <rect x="0" y="0" width="402" height="400" fill="url(#stripe)" clip-path="url(#c2)"/>
+      <circle cx="330" cy="146" r="52" fill="none" stroke="#B9A07F" stroke-width="1.2"/>
+      <circle cx="342" cy="154" r="48" fill="none" stroke="#B9A07F" stroke-width="1.2"/>
+      <circle cx="268" cy="352" r="72" fill="none" stroke="#EBD57A" stroke-width="1.5"/>
+      <circle cx="338" cy="336" r="7" fill="#EBD57A"/><circle cx="214" cy="304" r="4" fill="#EBD57A"/>
+      <circle cx="58" cy="232" r="24" fill="#A23F2B"/><circle cx="62" cy="228" r="20" fill="none" stroke="#E7B9A9" stroke-width=".8"/>
+      <circle cx="96" cy="186" r="13" fill="none" stroke="#A23F2B" stroke-width="1"/>
+      <g transform="translate(359 262)"><circle r="26" fill="#EBD57A"/><path d="M-26 -4L20 -18M-24 10L24 -4M-14 22L26 10" stroke="#F7EFC9" stroke-width="6" fill="none" clip-path="circle(26px)"/></g>
+    </svg>
+    <div class="txt">
+      <span class="no">第56回</span>
+      <span class="ttl">一橋祭</span>
+      <span class="theme">まつりいろ</span>
+      <span class="yr">2025</span>
+      <span class="dates">11/22<span class="dw">SAT</span><span class="arrow"></span>11/24<span class="dw f">MON</span></span>
+      <span class="hrs">10:00〜17:00（最終日は16:00まで）</span>
+    </div>
+    <button class="entry" id="start" aria-label="ぽん吉に聞く: open the helper"><span class="q" aria-hidden="true">?</span><img src="assets/ponkichi-face.webp" alt=""></button>
+  </section>
+  <section class="pick gone" id="pick" aria-label="Choose Ponkichi's look">
+    <div class="top"><button id="pickBack"><svg width="14" height="14" viewBox="0 0 24 24" aria-hidden="true"><path d="M15 5l-7 7 7 7" stroke="#A23F2B" stroke-width="2.4" fill="none"/></svg>トップ</button></div>
+    <div class="lead"><h2>ぽん吉の姿をえらぶ</h2><p>Choose how Ponkichi looks while he shows you around.<br>案内してくれるぽん吉の姿を選んでね。</p></div>
+    <div class="preview"><img id="pv" src="assets/ponkichi-wave.webp" alt="Selected Ponkichi"></div>
+    <div class="opts" role="radiogroup" aria-label="Ponkichi avatar" id="opts"></div>
+    <button class="go" id="goChat">この姿で話す<small>Start chatting</small></button>
+  </section>
+  <header class="sitehead">
+    <div class="logo" id="logo" role="button" tabindex="0" aria-label="Back to top">
+      <svg width="34" height="34" viewBox="0 0 34 34" aria-hidden="true"><rect width="17" height="17" fill="#A23F2B"/><rect x="17" y="17" width="17" height="17" fill="#A23F2B"/><rect x="17" width="17" height="17" fill="#EFD36A"/><rect y="17" width="17" height="17" fill="#3B3B3B"/></svg>
+      <div><small>第56回</small><b>一橋祭</b></div>
+    </div>
+    <div class="headbtns">
+      <button class="mybtn" id="mybtn" aria-label="My企画page, saved projects"><svg width="12" height="12" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="8" r="5" fill="#fff"/><path d="M2 23c0-6 4.5-9 10-9s10 3 10 9z" fill="#fff"/></svg>My企画<span class="n" id="savedN">0</span></button>
+      <button class="menu" aria-label="Menu"><i></i><i></i><i></i></button>
+    </div>
+  </header>
+
+  <div class="banner">
+    <svg width="130" height="96" viewBox="0 0 130 96" style="left:150px;top:0;opacity:.85" aria-hidden="true">
+      <defs><pattern id="asa" width="26" height="45" patternUnits="userSpaceOnUse">
+        <g stroke="#fff" stroke-width=".8" fill="none">
+          <path d="M13 0V45M0 7.5L26 37.5M26 7.5L0 37.5M0 7.5L13 22.5L26 7.5M0 37.5L13 22.5L26 37.5M13 0L0 7.5M13 0L26 7.5M13 45L0 37.5M13 45L26 37.5M0 7.5V37.5M26 7.5V37.5"/>
+        </g></pattern>
+        <clipPath id="cc"><circle cx="65" cy="40" r="44"/></clipPath></defs>
+      <rect width="130" height="96" fill="url(#asa)" clip-path="url(#cc)"/>
+    </svg>
+    <svg width="220" height="96" viewBox="0 0 220 96" style="right:-30px;top:0" aria-hidden="true">
+      <circle cx="40" cy="96" r="70" fill="none" stroke="#EFD36A" stroke-width="1.5"/>
+      <circle cx="150" cy="40" r="56" fill="none" stroke="#fff" stroke-opacity=".6" stroke-width="1"/>
+      <circle cx="64" cy="22" r="7" fill="#EFD36A"/>
+    </svg>
+    <div class="en">Helper</div>
+    <h2>ぽん吉に聞く</h2>
+  </div>
+
+  <main class="chat" id="chat" aria-live="polite">
+    <div class="dateline">11/22 (土) · 国立キャンパス</div>
+  </main>
+
+  <div class="chips" id="chips" role="list"></div>
+  <form class="composer" id="form" autocomplete="off">
+    <label class="sr" for="msg">Message to Ponkichi</label>
+    <input id="msg" placeholder="Tell me who, how long, and what you want…" maxlength="300">
+    <button id="send" aria-label="Send"><svg width="18" height="18" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 11.5L21 3l-7.5 18-2.5-7z" fill="#fff"/></svg></button>
+  </form>
+  <div class="homebar" aria-hidden="true"><i></i></div>
+  <div class="toast" id="toast" role="status"></div>
+</div>
+</div>
+</div>
+
+<script>
+/* ---------- sample project data (prototype) ---------- */
+const ZONE = {"兼松講堂":"W","兼松前ステージ":"W","西プラザ":"W","西プラザステージ":"W","本館":"W","東1号館":"E","東2号館":"E","東プラザ":"E"};
+const P = [
+ {id:"p1",t:"書道パフォーマンス",g:"一橋大学淡成書道会",k:"show",v:"兼松前ステージ",s:"13:30",e:"14:00",en:"live large-brush calligraphy"},
+ {id:"p2",t:"CHERISH FESTIVAL",g:"ダンスサークル合同",k:"show",v:"兼松講堂",s:"14:30",e:"15:20",en:"joint dance showcase"},
+ {id:"p3",t:"アカペラライブ",g:"アカペラサークル",k:"show",v:"西プラザステージ",s:"15:00",e:"15:40",en:"a cappella live"},
+ {id:"p4",t:"吹奏楽ミニコンサート",g:"一橋大学吹奏楽団",k:"show",v:"兼松講堂",s:"12:00",e:"12:40",en:"wind ensemble concert"},
+ {id:"p5",t:"和太鼓演奏",g:"和太鼓サークル",k:"show",v:"兼松前ステージ",s:"16:00",e:"16:30",en:"taiko drumming"},
+ {id:"p6",t:"夜祭",g:"一橋祭運営委員会",k:"show",v:"兼松講堂",s:"17:30",e:"19:00",en:"the evening Night Festival"},
+ {id:"h1",t:"昇舞の盆踊り in 一橋祭 2025",g:"盆踊りサークル昇舞",k:"try",v:"西プラザ",s:"13:00",e:"13:40",en:"join-in Bon dance"},
+ {id:"h2",t:"謎解きラリー",g:"一橋祭運営委員会",k:"try",v:"本館",open:["10:00","16:00"],dur:45,en:"campus mystery rally"},
+ {id:"t1",t:"学祭JACK2025 in 一橋祭",g:"AGESTOCK実行委員会",k:"talk",v:"東2号館",s:"12:30",e:"14:00",en:"guest talk show"},
+ {id:"t2",t:"五学部合同公開講義",g:"一橋祭運営委員会",k:"talk",v:"本館",s:"14:00",e:"15:30",en:"open lecture by five faculties"},
+ {id:"t3",t:"SNS社会のニュース学",g:"一橋祭運営委員会",k:"talk",v:"東1号館",s:"13:00",e:"14:00",en:"news in the age of social media"},
+ {id:"t4",t:"バシトーク〜受験大好き一橋生〜",g:"一橋祭運営委員会",k:"talk",v:"東2号館",s:"15:00",e:"15:45",en:"exam-prep talk by students"},
+ {id:"t5",t:"究極のリカバリー方法",g:"一橋祭運営委員会",k:"talk",v:"東1号館",s:"11:00",e:"12:00",en:"how to really recover and rest"},
+ {id:"f1",t:"焼きそば",g:"硬式テニス部",k:"food",sub:"主食",v:"西プラザ",open:["10:00","17:00"],dur:20,price:500,en:"yakisoba noodles"},
+ {id:"f2",t:"チュロス",g:"国際交流サークル",k:"food",sub:"スイーツ",v:"東プラザ",open:["10:00","17:00"],dur:15,price:400,en:"churros"},
+ {id:"f3",t:"豚汁",g:"山岳部",k:"food",sub:"汁物",v:"西プラザ",open:["10:00","16:30"],dur:20,price:300,en:"pork miso soup"},
+ {id:"f4",t:"からあげ",g:"ラクロス部",k:"food",sub:"おかず",v:"東プラザ",open:["10:00","17:00"],dur:20,price:500,en:"fried chicken"},
+ {id:"f5",t:"クレープ",g:"料理研究会",k:"food",sub:"スイーツ",v:"西プラザ",open:["10:00","17:00"],dur:15,price:450,en:"crêpes"},
+ {id:"f6",t:"タピオカミルクティー",g:"留学生会",k:"food",sub:"ドリンク",v:"兼松前ステージ",open:["10:00","17:00"],dur:15,price:450,en:"bubble tea"},
+ {id:"e1",t:"写真展「国立の四季」",g:"写真部",k:"exhibit",v:"本館",open:["10:00","17:00"],dur:25,en:"photo exhibition of Kunitachi seasons"}
+];
+const BY = Object.fromEntries(P.map(p=>[p.id,p]));
+const GENRE = {
+  food:{ja:"飲食",c:"#C27A35"}, show:{ja:"パフォーマンス",c:"#A23F2B"}, talk:{ja:"講演会",c:"#2E4766"},
+  try:{ja:"体験型",c:"#3C7566"}, exhibit:{ja:"展示",c:"#73578A"}
+};
+const ICON = {
+  food:'<path d="M7 2v8a2 2 0 0 0 2 2v10h2V12a2 2 0 0 0 2-2V2h-1.5v7h-1V2H9v7H8V2zM17 2c-2 0-3 2.5-3 6v5h2v9h2V2z"/>',
+  show:'<circle cx="13" cy="4" r="2.4"/><path d="M11 7.5l-4 5 1.6 1.2 3-3.4.6 4.2-3.2 7.5 1.9.8 2.9-6.2 2.4 6.2 1.9-.7-2.8-7.7-.4-4.2 3 2.4 1.2-1.6z"/>',
+  talk:'<path d="M12 4L1 9l11 5 9-4.1V16h2V9z"/><path d="M5 12.6V17c0 1.7 3.1 3 7 3s7-1.3 7-3v-4.4l-7 3.2z"/>',
+  try:'<path d="M3 10v4h3l7 4V6L6 10zM15 8.5v7a4 4 0 0 0 0-7zM18 6l3-2M18 12h3.5M18 18l3 2" stroke="currentColor" stroke-width="1.5"/>',
+  exhibit:'<path d="M3 4h18v16H3zM5 6v12h14V6z"/><path d="M6 17l4-5 3 3.5 2-2 3 3.5z"/>'
+};
+const ic = (k,size=14,col="currentColor") => `<svg class="ic" width="${size}" height="${size}" viewBox="0 0 24 24" fill="${col}" style="color:${col}" aria-hidden="true">${ICON[k]}</svg>`;
+
+/* ---------- helpers ---------- */
+const toMin = s => { const [h,m]=s.split(":").map(Number); return h*60+m; };
+const toHM = m => `${String(Math.floor(m/60)).padStart(2,"0")}:${String(m%60).padStart(2,"0")}`;
+const walkMin = (a,b) => !a ? 0 : (a===b ? 0 : (ZONE[a]===ZONE[b] ? 5 : 10));
+const durOf = p => p.s ? toMin(p.e)-toMin(p.s) : p.dur;
+const esc = s => String(s).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+function langOf(t){ if(/[\u3040-\u30ff]/.test(t)) return "ja"; if(/[\u4e00-\u9fff]/.test(t)) return "zh"; return "en"; }
+
+/* ---------- built-in planner (used when Claude is unavailable) ---------- */
+function parse(text){
+  const t = text.toLowerCase();
+  let start = 13*60;
+  if(/afternoon|午後|下午/.test(t)) start = 13*60;
+  else if(/morning|午前|朝|早上|上午/.test(t)) start = 10*60;
+  else if(/noon|lunch|お昼|昼|中午/.test(t)) start = 12*60;
+  else if(/evening|night|夕方|夜|晚上|傍晚/.test(t)) start = 16*60;
+  let m = t.match(/(\d{1,2})(?::(\d{2}))?\s*(pm|am|時(?!間)|點(?!心)|点(?!心))/);
+  if(m){ let h=+m[1]; if(m[3]==="pm"&&h<12) h+=12; if((m[3]==="時"||m[3]==="點"||m[3]==="点")&&h<9) h+=12; if(h>=9&&h<=18) start=h*60+(+m[2]||0); }
+  let dur = 120;
+  const words = {one:1,an:1,a:1,two:2,three:3,four:4,"一":1,"二":2,"兩":2,"两":2,"三":3,"四":4,"１":1,"２":2,"３":3};
+  m = t.match(/(\d+(?:\.\d+)?|one|two|three|four|an?|一|二|兩|两|三|四|１|２|３)\s*(?:and a half\s*)?(hours?|hrs?|時間|小時|小时|個小時|个小时)/);
+  if(m){ dur = (words[m[1]] ?? parseFloat(m[1]))*60; }
+  if(/half|半/.test(t) && m) dur += 30;
+  if(/(\d+)\s*(min|分)/.test(t)){ const mm=t.match(/(\d+)\s*(min|分)/); if(!m) dur=+mm[1]; }
+  dur = Math.max(30, Math.min(dur, 360));
+  const wants = [];
+  const add = (k,re) => { const i = t.search(re); if(i>=0) wants.push([i,k]); };
+  add("food",/snack|eat|food|lunch|hungry|sweet|drink|dessert|食|おやつ|お腹|スイーツ|飲み|吃|點心|点心|小吃|甜點|喝/);
+  add("show",/show|perform|dance|music|live|stage|concert|ショー|ライブ|ステージ|演奏|ダンス|表演|演出|看秀|音樂|音乐/);
+  add("talk",/talk|lecture|seminar|講演|講義|トーク|演講|講座|讲座|座談/);
+  add("try",/try|hands-on|experience|game|join|play|体験|遊|参加|謎解き|玩|體驗|体验|參加/);
+  add("exhibit",/exhibit|gallery|photo|展示|展覧|展覽|写真|攝影/);
+  wants.sort((a,b)=>a[0]-b[0]);
+  let w = [...new Set(wants.map(x=>x[1]))];
+  if(!w.length) w = ["food","show"];
+  const sweet = /snack|sweet|dessert|おやつ|スイーツ|點心|点心|甜/.test(t);
+  const party = /classmate|friends?|同學|同学|朋友|友達|友だち|クラス/.test(t) ? "friends" : /kid|child|son|daughter|子ども|子供|小孩|孩子/.test(t) ? "kids" : "";
+  return {start, dur, wants:w, sweet, party};
+}
+function plan(q){
+  const s=q.start, e=q.start+q.dur, picks=[];
+  const fits = (p,at,prevV,prevEnd) => at >= prevEnd + walkMin(prevV,p.v);
+  // scheduled items first
+  for(const k of q.wants.filter(k=>k!=="food")){
+    const cands = P.filter(p=>p.k===k && p.s && toMin(p.s)>=s && toMin(p.e)<=e).sort((a,b)=>toMin(a.s)-toMin(b.s));
+    let got = 0;
+    for(const p of cands){
+      if(got>=2 || picks.length>=3) break;
+      const st=toMin(p.s), en=toMin(p.e);
+      const clash = picks.some(x=> !x.flex && !(en + walkMin(p.v,x.p.v) <= x.at || x.at + x.d + walkMin(x.p.v,p.v) <= st));
+      if(!clash){ picks.push({p,at:st,d:en-st}); got++; }
+    }
+    if(!got){ // fall back to open-hours items (rally, exhibit)
+      const p = P.find(p=>p.k===k && p.open); if(p) picks.push({p,at:-1,d:p.dur,flex:true});
+    }
+  }
+  // place flexible items + food into gaps
+  const flexNeeds = picks.filter(x=>x.flex).map(x=>x.p); 
+  let fixed = picks.filter(x=>!x.flex).sort((a,b)=>a.at-b.at);
+  if(q.wants.includes("food")){
+    const pool = P.filter(p=>p.k==="food" && (q.sweet ? /スイーツ|ドリンク/.test(p.sub) : true));
+    flexNeeds.unshift(pool.find(p=>!fixed[0] || ZONE[p.v]===ZONE[fixed[0].p.v]) || pool[0]);
+  }
+  for(const p of flexNeeds){
+    const slots = [{from:s, prevV:null}];
+    fixed.forEach(x=>slots.push({from:x.at+x.d, prevV:x.p.v}));
+    let placed=false;
+    for(const sl of slots){
+      const at = sl.from + walkMin(sl.prevV,p.v);
+      const next = fixed.find(x=>x.at>=sl.from);
+      const limit = next ? next.at - walkMin(p.v,next.p.v) : e;
+      if(at + p.dur <= limit && at>=toMin(p.open[0]) && at+p.dur<=toMin(p.open[1])){ fixed.push({p,at,d:p.dur}); fixed.sort((a,b)=>a.at-b.at); placed=true; break; }
+    }
+    if(!placed && fixed.length===0) fixed.push({p,at:s,d:p.dur});
+  }
+  return fixed.map(x=>({id:x.p.id,time:toHM(x.at)}));
+}
+const T = {
+  en:{
+    hi:"Hi, I'm Ponkichi, pon! I came out of the campus woods because the festival is so lively. Tell me who you're with, how much time you have, and what you feel like. I'll put a route together.",
+    ok:(q)=>`Got it, pon! ${q.party==="friends"?"A fun afternoon with your classmates":q.party==="kids"?"An easy route for little legs":"A route just for you"}: ${toHM(q.start)}–${toHM(q.start+q.dur)}, with as little walking as I can manage.`,
+    none:"Hmm, nothing fits that window, pon. Try a different time, or tell me a little more?",
+    close:"Tap ♥ to save a stop to My企画page. Want me to swap anything, pon?",
+    tanuki:"I'm the festival's AI helper, borrowing Ponkichi's look to show you around, pon. I'm still practising my human disguise!",
+    plan:"Your route", note:{food:"Grab a bite on the way",show:"Get there 5 minutes early for a good spot",talk:"Seats fill up, arrive a bit early",try:"Everyone can join in",exhibit:"Take your time"}
+  },
+  ja:{
+    hi:"こんにちは、ぽん吉だぽん！お祭りがにぎやかで、森から出てきちゃったぽん。だれと・どれくらい・何をしたいか教えてくれたら、ルートを作るぽん。",
+    ok:(q)=>`了解ぽん！${toHM(q.start)}〜${toHM(q.start+q.dur)}、なるべく歩かないルートにしたぽん。`,
+    none:"うーん、その時間に合う企画が見つからないぽん。時間を変えてみる？",
+    close:"♥ を押すと My企画page に保存できるぽん。入れ替えたいものはあるぽん？",
+    tanuki:"ぼくは一橋祭のAIヘルパーで、ぽん吉の姿を借りて案内しているぽん。人間に化ける練習中だぽん！",
+    plan:"おすすめルート", note:{food:"移動の前にひと休み",show:"5分前に着くと見やすいぽん",talk:"席が埋まりやすいので早めに",try:"だれでも参加できるぽん",exhibit:"ゆっくり見てね"}
+  },
+  zh:{
+    hi:"你好，我是ぽん吉ぽん！祭典太熱鬧了，我從森林跑出來了。告訴我你跟誰來、有多少時間、想做什麼，我幫你排路線ぽん。",
+    ok:(q)=>`收到ぽん！${toHM(q.start)}–${toHM(q.start+q.dur)}，幫你排了一條盡量不用走回頭路的路線。`,
+    none:"嗯…這個時段找不到合適的企劃ぽん。要不要換個時間？",
+    close:"按 ♥ 就能存到 My企画page。想換掉哪一站嗎ぽん？",
+    tanuki:"我是一橋祭的 AI 小幫手，借用ぽん吉的樣子帶你逛ぽん。我還在練習變成人類！",
+    plan:"推薦路線", note:{food:"先補充一下體力",show:"提早 5 分鐘到比較好卡位",talk:"座位容易滿，早點到",try:"大家都能一起參加",exhibit:"慢慢看就好"}
+  }
+};
+
+/* ---------- Claude (only available inside claude.ai; on GitHub Pages this returns null and the built-in planner is used) ---------- */
+let samplePromise = window.claude?.use ? window.claude.use("sample").catch(()=>null) : Promise.resolve(null);
+let sampleOff = false;
+const history = []; // [{role, content}]
+const DATA_LINES = P.map(p => p.s
+  ? `${p.id} | ${p.t} | ${GENRE[p.k].ja} | ${p.v} | ${p.s}-${p.e} | ${p.en}`
+  : `${p.id} | ${p.t} | ${GENRE[p.k].ja}${p.sub?"/"+p.sub:""} | ${p.v} | open ${p.open[0]}-${p.open[1]}, ~${p.dur}min | ${p.en}${p.price?` | ¥${p.price}`:""}`).join("\n");
+function buildPrompt(userText){
+  const convo = history.slice(-6).map(h=>`${h.role==="user"?"Visitor":"Ponkichi"}: ${h.content}`).join("\n");
+  return `You are Ponkichi (ぽん吉), the tanuki mascot of Ikkyosai, Hitotsubashi University's festival (Kunitachi campus, Sat 11/22). Ponkichi lives deep in the campus woods, came out because the festival is lively, is curious about humans and is practising turning into one. Speak warmly and briefly, answer first, add one small touch of character, and end sentences with "pon" (English) or "ぽん" (Japanese/Chinese). Reply in the visitor's language. You are an AI helper borrowing Ponkichi's look: say so honestly if asked. Never invent projects, never ask for personal information.
+
+PROJECTS (id | title | genre | venue | time | note):
+${DATA_LINES}
+
+Walking: same side of campus 5 min; between west (兼松講堂, 兼松前ステージ, 西プラザ, 西プラザステージ, 本館) and east (東1号館, 東2号館, 東プラザ) 10 min, crossing 大学通り.
+Rules: scheduled items start at their listed time; open-hours items can start any time within opening hours. Keep everything inside the visitor's time window (afternoon defaults to 13:00, default length 2 hours), no overlaps, include walking. Cover each thing they asked for. 2-4 stops. If the message is not a planning request, return an empty plan and just answer.
+
+${convo ? "Conversation so far:\n"+convo+"\n\n" : ""}Visitor: ${userText}
+
+Return only JSON: {"reply":"1-2 sentences","plan":[{"id":"p1","time":"HH:MM","note":"why this stop, max 12 words, visitor's language"}],"closing":"one short sentence"}`;
+}
+async function askClaude(text){
+  if(sampleOff) return null;
+  const sample = await samplePromise;
+  if(!sample) return null;
+  try{
+    const r = await sample.json(buildPrompt(text), {modelTier:"quick", cache:false});
+    if(!r || typeof r.reply!=="string") return null;
+    const planList = Array.isArray(r.plan) ? r.plan.filter(x=>x && BY[x.id] && /^\d{1,2}:\d{2}$/.test(x.time)) : [];
+    planList.forEach(x=>{ const p=BY[x.id]; if(p.s) x.time=p.s; });
+    planList.sort((a,b)=>toMin(a.time)-toMin(b.time));
+    return {reply:r.reply, plan:planList, closing: typeof r.closing==="string"?r.closing:""};
+  }catch(e){
+    if(e && (e.code==="not_granted")) sampleOff = true;
+    return null;
+  }
+}
+
+/* ---------- avatars ---------- */
+const AV = {
+  a1:{src:"assets/ponkichi-wave.webp", label:{en:"Waving",ja:"あいさつ"}, size:"150% auto", pos:"62% 6%", opt:"contain", optPos:"center"},
+  a3:{src:"assets/ponkichi-map.webp", label:{en:"Map",ja:"マップ"}, size:"160% auto", pos:"40% 3%", opt:"contain", optPos:"center"},
+  a4:{src:"assets/ponkichi-face.webp", label:{en:"Face",ja:"おかお"}, size:"118% auto", pos:"50% 40%", opt:"contain", optPos:"center"}
+};
+let curAv = "a1";
+const avStyle = k => `background-image:url(${AV[k].src});background-size:${AV[k].size};background-position:${AV[k].pos}`;
+
+/* ---------- UI ---------- */
+const chat = document.getElementById("chat"), input = document.getElementById("msg"), sendBtn = document.getElementById("send");
+const saved = new Set(); let lastLang = "en";
+function avatar(){ return `<div class="av" aria-hidden="true" style="${avStyle(curAv)}"></div>`; }
+function addMsg(text, who){
+  const row = document.createElement("div");
+  row.className = "row " + (who==="me"?"me":"pon");
+  row.innerHTML = (who==="me"?"":avatar()) + `<div class="bub"></div>`;
+  row.querySelector(".bub").textContent = text;
+  chat.appendChild(row); chat.scrollTop = chat.scrollHeight; return row;
+}
+function typing(lang){
+  const row = document.createElement("div"); row.className="row pon typing";
+  const msg = {en:"Thinking with a leaf on my head…",ja:"頭に葉っぱをのせて考え中…",zh:"頭上頂著葉子思考中…"}[lang];
+  row.innerHTML = avatar()+`<div class="bub"><span class="dots"><i></i><i></i><i></i></span>${msg}</div>`;
+  chat.appendChild(row); chat.scrollTop = chat.scrollHeight; return row;
+}
+function heartSVG(){ return `<svg width="22" height="20" viewBox="0 0 24 22" aria-hidden="true"><path d="M12 21.5l-1.5-1.3C5 15.4 1.5 12.2 1.5 7.9 1.5 4.6 4.1 2 7.4 2c1.9 0 3.6.9 4.6 2.3C13 2.9 14.7 2 16.6 2c3.3 0 5.9 2.6 5.9 5.9 0 4.3-3.5 7.5-9 12.3z"/></svg>`; }
+function renderPlan(list, lang){
+  const L = T[lang];
+  const first = list[0], last = list[list.length-1], lp = BY[last.id];
+  const endT = toMin(last.time) + durOf(lp);
+  const box = document.createElement("section"); box.className="plan";
+  box.setAttribute("aria-label", L.plan);
+  let html = `<h3>${L.plan}</h3><div class="sub">11/22 (土) · ${first.time}–${toHM(endT)} · ${list.length} stops</div>`;
+  list.forEach((x,i)=>{
+    const p = BY[x.id], G = GENRE[p.k];
+    if(i>0){ const w = walkMin(BY[list[i-1].id].v, p.v); html += `<div class="stop"><span></span><div class="walk">${w? (lang==="ja"?`徒歩${w}分`:lang==="zh"?`步行 ${w} 分鐘`:`${w} min walk`) + (ZONE[BY[list[i-1].id].v]!==ZONE[p.v] ? (lang==="en"?" · cross 大学通り":" · 大学通りを渡る") : "") : (lang==="en"?"same spot":lang==="ja"?"同じ場所":"同一地點")}</div></div>`; }
+    const note = x.note || L.note[p.k];
+    html += `<div class="stop"><div class="time">${x.time}</div>
+      <div class="pcard">
+        <div class="thumb" style="background:${G.c}">
+          <svg width="64" height="64" viewBox="0 0 64 64" style="position:absolute;inset:0;opacity:.18" aria-hidden="true"><path d="M0 16L32 0 64 16M0 48L32 32 64 48M32 0V64M0 16V48M64 16V48M0 16L64 48M64 16L0 48" stroke="#fff" fill="none"/></svg>
+          ${ic(p.k,28,"#fff")}
+        </div>
+        <div>
+          <div class="ptitle">${esc(p.t)}</div>
+          <div class="pgroup">${esc(p.g)} · ${esc(p.v)}${p.price?` · ¥${p.price}`:""}</div>
+          <div class="pnote">${esc(note)}</div>
+          <div class="pills"><span class="pill">${ic(p.k,11,"#A23F2B")}${p.sub?esc(p.sub):G.ja}</span><span class="pill">${durOf(p)}${lang==="en"?" min":"分"}</span>
+            <button class="heart" data-id="${p.id}" aria-pressed="${saved.has(p.id)}" aria-label="Save ${esc(p.t)} to My企画page">${heartSVG()}</button></div>
+        </div>
+      </div></div>`;
+  });
+  const lab = {en:["Save all to My企画","Show on map"],ja:["まとめてMy企画へ","マップで見る"],zh:["全部存到 My企画","在地圖上看"]}[lang];
+  html += `<div class="actions"><button class="primary" data-act="all">${lab[0]}</button><button data-act="map">${lab[1]}</button></div>`;
+  box.innerHTML = html;
+  box.addEventListener("click", ev=>{
+    const h = ev.target.closest(".heart");
+    if(h){ toggle(h.dataset.id); return; }
+    const a = ev.target.closest("[data-act]");
+    if(a?.dataset.act==="all"){ list.forEach(x=>saved.add(x.id)); sync(); toast({en:"Saved to My企画page",ja:"My企画pageに保存したぽん",zh:"已存到 My企画page"}[lang]); }
+    if(a?.dataset.act==="map"){ toast({en:"Opens MAP検索 on the live site",ja:"本番ではMAP検索が開くぽん",zh:"正式版會開啟 MAP検索"}[lang]); }
+  });
+  chat.appendChild(box); chat.scrollTop = chat.scrollHeight;
+}
+function toggle(id){ saved.has(id)?saved.delete(id):saved.add(id); sync(); }
+function sync(){
+  document.getElementById("savedN").textContent = saved.size;
+  document.querySelectorAll(".heart").forEach(h=>h.setAttribute("aria-pressed", saved.has(h.dataset.id)));
+}
+let tt; function toast(m){ const t=document.getElementById("toast"); t.textContent=m; t.classList.add("on"); clearTimeout(tt); tt=setTimeout(()=>t.classList.remove("on"),1800); }
+document.getElementById("mybtn").onclick = ()=>{
+  const names = [...saved].map(id=>BY[id].t);
+  toast(names.length ? names.slice(0,2).join("、")+(names.length>2?` +${names.length-2}`:"") : {en:"Nothing saved yet",ja:"まだ保存していないぽん",zh:"還沒有收藏"}[lastLang]);
+};
+
+async function handle(text){
+  text = text.trim(); if(!text) return;
+  const lang = langOf(text); lastLang = lang;
+  addMsg(text,"me"); input.value=""; sendBtn.disabled = true;
+  const tip = typing(lang);
+  let res = await askClaude(text);
+  if(!res){
+    await new Promise(r=>setTimeout(r,700));
+    const L = T[lang];
+    if(/tanuki|real|human|ai|robot|本物|人間|狸|真的|機器人|你是誰|who are you/i.test(text) && !/hour|時間|小時|snack|show/i.test(text)){
+      res = {reply:L.tanuki, plan:[], closing:""};
+    } else {
+      const q = parse(text), pl = plan(q);
+      res = pl.length ? {reply:L.ok(q), plan:pl, closing:L.close} : {reply:L.none, plan:[], closing:""};
+    }
+  }
+  tip.remove();
+  addMsg(res.reply,"pon");
+  if(res.plan.length) renderPlan(res.plan, lang);
+  if(res.closing) addMsg(res.closing,"pon");
+  history.push({role:"user",content:text},{role:"assistant",content:res.reply + (res.plan.length? " [plan: "+res.plan.map(x=>x.id+"@"+x.time).join(", ")+"]":"")});
+  sendBtn.disabled = false; input.focus({preventScroll:true});
+}
+document.getElementById("form").addEventListener("submit", e=>{ e.preventDefault(); handle(input.value); });
+
+const CHIPS = [
+  "I'm with my classmates, we have two hours this afternoon, and we want a snack and a show.",
+  "子ども連れで、午前中に体験できるものを1時間半くらい",
+  "我想聽講座，下午大概兩小時，順便吃點甜的",
+  "Are you a real tanuki?"
+];
+const chipsEl = document.getElementById("chips");
+CHIPS.forEach(c=>{ const b=document.createElement("button"); b.className="chip"; b.type="button"; b.textContent=c; b.title=c; b.setAttribute("role","listitem"); b.onclick=()=>handle(c); chipsEl.appendChild(b); });
+
+let greeted = false;
+
+
+const hero = document.getElementById("hero");
+const pick = document.getElementById("pick"), pv = document.getElementById("pv"), opts = document.getElementById("opts");
+Object.entries(AV).forEach(([k,a])=>{
+  const b = document.createElement("button"); b.className="opt"; b.type="button"; b.setAttribute("role","radio");
+  b.dataset.k = k; b.setAttribute("aria-checked", k===curAv);
+  b.innerHTML = `<span class="img" style="background-image:url(${a.src});background-size:contain;background-position:center"></span>${a.label.ja} · ${a.label.en}`;
+  b.onclick = ()=>{ curAv = k; pv.src = a.src; opts.querySelectorAll(".opt").forEach(o=>o.setAttribute("aria-checked", o.dataset.k===k)); };
+  opts.appendChild(b);
+});
+document.getElementById("start").onclick = ()=>{ hero.classList.add("gone"); pick.classList.remove("gone"); };
+document.getElementById("pickBack").onclick = ()=>{ hero.classList.remove("gone"); };
+document.getElementById("goChat").onclick = ()=>{
+  pick.classList.add("gone");
+  document.querySelectorAll(".av").forEach(el=>el.setAttribute("style", avStyle(curAv)));
+  if(!greeted){ greeted = true; addMsg(T.en.hi,"pon"); addMsg(T.ja.hi,"pon"); }
+  setTimeout(()=>input.focus({preventScroll:true}),400);
+};
+const back = ()=>{ hero.classList.remove("gone"); pick.classList.add("gone"); };
+document.getElementById("logo").onclick = back;
+document.getElementById("logo").onkeydown = e=>{ if(e.key==="Enter"||e.key===" "){ e.preventDefault(); back(); } };
+
+/* ---------- fit device to viewport ---------- */
+function fit(){
+  const bare = innerWidth < 520;
+  document.body.classList.toggle("bare", bare);
+  const dev = document.getElementById("device"), st = document.getElementById("stage");
+  if(bare){ dev.style.transform=""; return; }
+  const capW = innerWidth > 860 ? 316 : 0;
+  document.getElementById("caption").style.display = capW ? "" : "none";
+  const sc = Math.min(1, (innerHeight-40)/898, (innerWidth-capW-40)/426);
+  dev.style.transform = `scale(${sc})`;
+  st.style.width = 426*sc+"px"; st.style.height = 898*sc+"px";
+}
+addEventListener("resize", fit); fit();
+</script>
+</body>
+</html>
